@@ -5,6 +5,7 @@ import org.apache.commons.lang3.mutable.MutableInt;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.phantomjs.PhantomJSDriver;
+import org.openqa.selenium.phantomjs.PhantomJSDriverService;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
 public class ApplicationMain {
@@ -13,22 +14,29 @@ public class ApplicationMain {
     String baseUrl = "http://en.strikermanager.com";
     
     MutableInt seniorCurrent = new MutableInt(88), juniorCurrent = new MutableInt(84);
-    String seniorCoachUrl = baseUrl+"/empleados.php?accion=lista&tipo=5";
-    String juniorCoachUrl = baseUrl+"/empleados.php?accion=lista&tipo=6";
+    String seniorCoachUrl = baseUrl+"/empleados.php?accion=lista&existe=1&tipo=5";
+    String juniorCoachUrl = baseUrl+"/empleados.php?accion=lista&existe=1&tipo=6";
     
     
     boolean isLoginFormPresent(){
     	 return driver.findElements(By.xpath("//form[@name='login']")).size()>0;
     }
     
-    void login(){
-    	driver.findElement(By.xpath("//div[@class='caja']/input[@name='alias']")).sendKeys("");
-    	driver.findElement(By.xpath("//div[@class='caja']/input[@name='pass']")).sendKeys("");
-    	driver.findElement(By.xpath("//div[@class='botones']/input[@class='boton']")).click();
+    boolean login(){
+    	try{
+	    	driver.findElement(By.xpath("//div[@class='caja']/input[@name='alias']")).sendKeys("wittyprakash");
+	    	driver.findElement(By.xpath("//div[@class='caja']/input[@name='pass']")).sendKeys("footballmurugesan");
+	    	driver.findElement(By.xpath("//div[@class='botones']/input[@class='boton']")).click();
+	    	return true;
+    	}
+    	catch(Exception e){
+    		return false;
+    	}
     }
     
-    void hireCoach(String url, MutableInt currentAvg){
+    void hireCoach(String url, MutableInt currentAvg) throws InterruptedException{
     	driver.get(url);
+		Thread.sleep(2000);
     	driver.switchTo().frame("marco");
     	List<WebElement> coaches = driver.findElements(By.xpath("//tr[@class='tipo1']|//tr[@class='tipo2']"));
     	int maxScore = 0, maxId = 0;
@@ -51,26 +59,21 @@ public class ApplicationMain {
     public void hireCoaches() throws InterruptedException{
 		capabilities = DesiredCapabilities.phantomjs();
 		driver = new PhantomJSDriver(capabilities);
-			
+		try{
 			driver.get(baseUrl);
+			Thread.sleep(2000);
 			while(true){
-			try{
-		    	if(isLoginFormPresent()){
-					login();
-					System.out.println("successfully logged in");
+		    	while(isLoginFormPresent()){
+		    		System.out.println("trying to login");
+		    		login();
 				}
-				else{
-					hireCoach(seniorCoachUrl, seniorCurrent);
-					Thread.sleep(2000);
-					hireCoach(juniorCoachUrl, juniorCurrent);
-					Thread.sleep(2000);
-				}
+				hireCoach(seniorCoachUrl, seniorCurrent);
+				hireCoach(juniorCoachUrl, juniorCurrent);
 			}
-			catch(Exception e){
-				System.out.println(e);
-			}
-			
-    	}
+		}
+		catch(Exception e){
+			hireCoaches();
+		}
     }
     
 	public static void main(String args[]) throws IOException, InterruptedException{
